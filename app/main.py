@@ -17,11 +17,13 @@ app = FastAPI(
 MODEL_NAME = "energy-demand-forecaster"
 STAGE = "production"
 
+# If not set by Docker, point to the local notebook's mlruns directory
+if not os.environ.get("MLFLOW_TRACKING_URI"):
+    mlruns_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "notebook", "mlruns"))
+    mlflow.set_tracking_uri(f"file:///{mlruns_path}")
+
 try:
-    print(f"Loading MLflow model: {MODEL_NAME}...")
-    # Optionally load the specific 'production' stage model if managed
-    # model_uri = f"models:/{MODEL_NAME}/{STAGE}" 
-    # For now, default to the latest version registered
+    print(f"Loading MLflow model: {MODEL_NAME} from {mlflow.get_tracking_uri()}...")
     model_uri = f"models:/{MODEL_NAME}/latest" 
     model = mlflow.pyfunc.load_model(model_uri)
     print("Model loaded successfully.")
