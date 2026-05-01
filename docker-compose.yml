@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  fastapi-forecaster:
+    build: .
+    container_name: energy_forecaster_api
+    ports:
+      - "8000:8000"
+    environment:
+      - MLFLOW_TRACKING_URI=file:///app/mlruns
+    volumes:
+      # Sync the src and app directories for quick local testing
+      - ./app:/app/app
+      - ./src:/app/src
+      # Ensure MLruns are actually mapped so the API can read the latest run
+      - ./notebook/mlruns:/app/mlruns
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    depends_on:
+      - mlflow-server
+
+  mlflow-server:
+    image: python:3.11-slim
+    container_name: mlflow_ui
+    ports:
+      - "5000:5000"
+    command: >
+      bash -c "pip install mlflow && 
+      mlflow server \
+        --backend-store-uri file:///mlruns \
+        --default-artifact-root file:///mlruns \
+        --host 0.0.0.0"
+    volumes:
+      - ./notebook/mlruns:/mlruns
+    restart: always
+
