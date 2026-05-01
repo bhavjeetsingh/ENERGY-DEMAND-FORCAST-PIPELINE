@@ -1,4 +1,4 @@
-# 🇮🇳 India Energy Demand Forecaster (IEX Pipeline)
+# India Energy Demand Forecaster (IEX Pipeline)
 
 This project is an end-to-end MLOps pipeline for predicting the 24-hour ahead electricity demand in India. It fetches raw meteorological data, engineers temporal lag features, trains robust machine-learning models (XGBoost, Prophet, LSTM) via `MLflow`, and automatically serves the winning model with a high-performance `FastAPI` endpoint.
 
