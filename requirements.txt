@@ -3,3 +3,8 @@ requests
 pyarrow
 jupyter
 dvc
+xlrd == 2.0.1
+beautifulsoup4 
+lxml
+selenium 
+webdrivder-manager
