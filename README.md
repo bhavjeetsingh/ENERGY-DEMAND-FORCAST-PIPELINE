@@ -9,7 +9,19 @@ An end-to-end Machine Learning Operations (MLOps) pipeline that forecasts India'
 
 ## 🏢 Business Problem
 India's grid operators pay ~₹5/kWh in imbalance charges when actual demand deviates from the schedule. At a 180 GW national base load, a **1% forecast error equals a 1,800 MW deviation, costing approximately ₹9 crore per hour**. This API minimizes that error using historical IEX data, calendar effects, and Open-Meteo weather features.
+## Data Insights (EDA)
 
+## 🔍 Data Insights & Feature Engineering
+Before training the XGBoost model, extensive Exploratory Data Analysis (EDA) was conducted to isolate the strongest predictive signals.
+
+**1. Intraday Volatility** Demand exhibits massive daily swings. Capturing these peak-hour ramps required engineering robust lag features (`mcv_lag_24h`, `mcv_lag_168h`) and cyclical hour embeddings.
+![Hourly Demand Pattern](images/fig2_hourly_pattern.png)
+
+**2. The Weather Driver** There is a clear non-linear relationship between temperature and electricity consumption. This insight drove the architectural decision to integrate the Open-Meteo API for real-time cooling-demand features.
+![Temperature vs Demand](images/fig7_temperature_demand.jpg)
+
+**3. Feature Correlation Matrix** Statistical validation of the engineered features ensuring strong target correlation while minimizing multicollinearity before model ingestion.
+![Correlation Matrix](images/fig5_correlation.png)
 ## 🏗️ Architecture
 ```mermaid
 graph LR
@@ -87,3 +99,4 @@ Prophet,3.8%,"6,840",210ms
 ├── Dockerfile           # FastAPI container blueprint
 ├── docker-compose.yml   # Multi-container orchestration
 └── requirements.txt     # Python dependencies
+
