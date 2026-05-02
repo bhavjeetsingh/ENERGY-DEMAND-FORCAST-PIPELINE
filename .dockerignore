@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Python Virtual Environment
+.venv/
+venv/
+env/
+
+# Python Cache
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Note: We are deliberately NOT ignoring /mlruns or mlflow.db
+# because our container needs them to serve the model!

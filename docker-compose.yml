@@ -5,13 +5,11 @@ services:
     ports:
       - "8000:8000"
     environment:
-      - MLFLOW_TRACKING_URI=file:///app/mlruns
+      # Use HTTP to talk directly to the MLflow container over the Docker network
+      - MLFLOW_TRACKING_URI=http://mlflow-server:5000
     volumes:
-      # Sync the src and app directories for quick local testing
-      - ./app:/app/app
-      - ./src:/app/src
-      # Ensure MLruns are actually mapped so the API can read the latest run
-      - ./notebook/mlruns:/app/mlruns
+      # Map the entire project root to /app inside the container
+      - .:/app
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
@@ -26,13 +24,10 @@ services:
     container_name: mlflow_ui
     ports:
       - "5000:5000"
-    command: >
-      bash -c "pip install mlflow && 
-      mlflow server \
-        --backend-store-uri file:///mlruns \
-        --default-artifact-root file:///mlruns \
-        --host 0.0.0.0"
-    volumes:
-      - ./notebook/mlruns:/mlruns
+    # The allowed-hosts flag prevents the 403 "Invalid Host header" error
+    # We use an array format for the command to ensure Windows handles the string correctly
+    command: ["bash", "-c", "pip install mlflow && mlflow server --backend-store-uri sqlite:///mlflow.db --default-artifact-root ./mlruns --host 0.0.0.0 --allowed-hosts mlflow-server,mlflow-server:5000,localhost,127.0.0.1"]    volumes:
+      # Map the project root to /mlflow so the database saves to your Windows drive
+      - .:/mlflow
+    working_dir: /mlflow
     restart: always
-
