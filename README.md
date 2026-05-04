@@ -100,3 +100,42 @@ Prophet,3.8%,"6,840",210ms
 ├── docker-compose.yml   # Multi-container orchestration
 └── requirements.txt     # Python dependencies
 
+## ☁️ Production Deployment (Azure)
+
+This project includes **Infrastructure-as-Code (Bicep)** for enterprise cloud deployment:
+
+### One-Command Azure Deployment
+```bash
+# Create Resource Group
+az group create --name energy-forecast-rg --location eastus
+
+# Deploy Bicep Infrastructure
+az deployment group create \
+  --resource-group energy-forecast-rg \
+  --template-file infrastructure/main.bicep \
+  --parameters infrastructure/parameters.json
+```
+
+### What Gets Deployed:
+- ✅ **App Service** (Linux B1 tier) — Hosts FastAPI container
+- ✅ **Container Registry (ACR)** — Stores Docker images
+- ✅ **Application Insights** — Real-time monitoring & alerting
+- ✅ **Storage Account** — Persistent model artifacts
+
+### GitHub Actions Automated CI/CD:
+1. Push code to `main` branch
+2. GitHub Actions automatically:
+   - Runs pytest unit tests
+   - Builds Docker image
+   - Pushes to Azure Container Registry
+   - Deploys to App Service
+   - Verifies health endpoint
+
+### Cost Estimate:
+- **App Service (B1):** $10/month
+- **Container Registry:** $5/month
+- **Application Insights:** $2/month
+- **Storage:** $0.50/month
+- **Total:** ~**$17.50/month**
+
+See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed step-by-step instructions.

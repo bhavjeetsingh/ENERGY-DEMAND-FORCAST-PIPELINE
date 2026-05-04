@@ -1,0 +1,73 @@
+name: Deploy to Azure App Service
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+          
+      - name: Run Pytest
+        run: pytest tests/test_api.py -v
+        
+      - name: Build Docker Image
+        run: docker build -t energy-forecaster:${{ github.sha }} .
+
+  deploy:
+    needs: test-and-build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+        
+      - name: Azure Login
+        uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          
+      - name: Login to Azure Container Registry
+        run: |
+          az acr login --name ${{ secrets.AZURE_ACR_LOGIN_SERVER | replace('https://', '') | replace('.azurecr.io', '') }}
+          
+      - name: Build and Push Docker Image
+        run: |
+          docker build -t ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:${{ github.sha }} .
+          docker push ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:${{ github.sha }}
+          docker tag ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:${{ github.sha }} ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:latest
+          docker push ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:latest
+          
+      - name: Deploy to App Service
+        uses: azure/webapps-deploy@v2
+        with:
+          app-name: ${{ secrets.AZURE_APP_SERVICE_NAME }}
+          images: ${{ secrets.AZURE_ACR_LOGIN_SERVER }}/energy-forecaster:latest
+          
+      - name: Verify Deployment
+        run: |
+          sleep 30
+          HEALTH_CHECK=$(curl -s -o /dev/null -w "%{http_code}" https://${{ secrets.AZURE_APP_SERVICE_NAME }}.azurewebsites.net/health)
+          if [ $HEALTH_CHECK -eq 200 ]; then
+            echo "✅ Deployment successful! API is healthy."
+          else
+            echo "❌ Deployment failed! Health check returned $HEALTH_CHECK"
+            exit 1
+          fi
